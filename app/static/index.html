@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orchestrated Multi-MCP AI Agent Platform</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="logo-icon"></div>
+        <div>
+          <h1>Multi-MCP Agent Platform</h1>
+          <p class="subtitle">LlamaIndex Workflows • Dual MCP Servers • FAISS RAG • Memory</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="/docs" target="_blank" class="nav-btn">
+          <span class="btn-icon"></span> Swagger API
+        </a>
+        <div class="status-indicator">
+          <span class="status-dot"></span> System Online
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-layout">
+    <!-- Left Sidebar: Agent Selection & Run Controls -->
+    <section class="sidebar-panel">
+      <div class="card">
+        <h2 class="card-title">Agent Configuration</h2>
+        
+        <div class="form-group">
+          <label for="agentSelect">Select Active Agent</label>
+          <select id="agentSelect" class="form-control">
+            <option value="" disabled selected>Loading agents...</option>
+          </select>
+        </div>
+
+        <div id="agentMetadata" class="agent-metadata">
+          <div class="meta-row">
+            <span class="meta-label">Model:</span>
+            <span id="agentModel" class="meta-value badge">-</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Knowledge Base:</span>
+            <span id="agentKB" class="meta-value badge badge-purple">-</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Allowed MCP Tools:</span>
+            <div id="agentToolsList" class="tools-tag-list"></div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <h3 class="card-subtitle">Execute Task</h3>
+        <div class="form-group">
+          <label for="conversationId">Conversation ID (Short-Term Memory)</label>
+          <input type="text" id="conversationId" class="form-control" value="conv_001" placeholder="e.g. conv_001">
+        </div>
+
+        <div class="form-group">
+          <label for="queryInput">Task Query</label>
+          <textarea id="queryInput" class="form-control query-box" rows="4" placeholder="Enter query for the agent..."></textarea>
+        </div>
+
+        <div class="presets-container">
+          <span class="preset-title">Sample Queries:</span>
+          <button class="preset-chip" onclick="setPreset('Give me a complete summary of customer ABC including recent activity and internal documentation.')">
+            Full ABC Research (CRM + Analytics + RAG)
+          </button>
+          <button class="preset-chip" onclick="setPreset('What is the ARR, churn risk, and telemetry health for customer ABC?')">
+            Analytics Metrics Query
+          </button>
+          <button class="preset-chip" onclick="setPreset('How should we contact customer ABC and what are their SLA requirements?')">
+            Long-Term Memory & SLA Policy
+          </button>
+        </div>
+
+        <button id="runBtn" class="btn-primary">
+          <span id="runSpinner" class="spinner" style="display: none;"></span>
+          <span id="runBtnText">Run Agent Workflow</span>
+        </button>
+      </div>
+
+      <!-- Knowledge Upload Card -->
+      <div class="card mt-4">
+        <h3 class="card-subtitle">Quick Knowledge Ingest</h3>
+        <p class="text-sm">Upload documents to test real-time RAG chunking & FAISS vector indexing.</p>
+        <form id="uploadForm">
+          <div class="form-group">
+            <select id="uploadKB" class="form-control text-sm">
+              <option value="customer_docs">customer_docs</option>
+              <option value="company_policies">company_policies</option>
+              <option value="technical_docs">technical_docs</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <input type="file" id="uploadFile" class="form-control text-sm" accept=".md,.txt,.pdf,.docx" required>
+          </div>
+          <button type="submit" class="btn-secondary btn-sm">Upload & Vectorize</button>
+        </form>
+        <div id="uploadStatus" class="upload-status text-sm"></div>
+      </div>
+    </section>
+
+    <!-- Right Workspace: Results, Trace, Prompt Audit -->
+    <section class="content-panel">
+      <div class="tab-nav">
+        <button class="tab-btn active" data-tab="answerTab">
+          <span class="tab-icon"></span> Final Answer
+        </button>
+        <button class="tab-btn" data-tab="traceTab">
+          <span class="tab-icon"></span> Execution Trace (<span id="traceStepCount">0</span>)
+        </button>
+        <button class="tab-btn" data-tab="sourcesTab">
+          <span class="tab-icon"></span> Sources & RAG (<span id="sourcesCount">0</span>)
+        </button>
+        <button class="tab-btn" data-tab="promptTab">
+          <span class="tab-icon"></span> Final Prompt Audit
+        </button>
+        <button class="tab-btn" data-tab="mcpTab">
+          <span class="tab-icon"></span> MCP Catalog
+        </button>
+      </div>
+
+      <!-- Tab 1: Final Answer -->
+      <div id="answerTab" class="tab-pane active">
+        <div id="welcomeState" class="empty-state">
+          <div class="empty-icon"></div>
+          <h3>Agent Platform Ready</h3>
+          <p>Select an agent from the left, pick a sample query or type your own, and click <strong>Run Agent Workflow</strong>.</p>
+          <div class="feature-pills">
+            <span class="pill">LlamaIndex Workflows</span>
+            <span class="pill">Dual MCP: CRM + Analytics</span>
+            <span class="pill">FAISS Vector Search</span>
+            <span class="pill">Context Compression</span>
+            <span class="pill">Prompt Auditing</span>
+          </div>
+        </div>
+
+        <div id="resultContainer" class="result-container" style="display: none;">
+          <div class="result-header">
+            <div class="result-meta">
+              <span id="execBadge" class="badge badge-success">Completed</span>
+              <span class="exec-id">ID: <code id="execIdDisplay">-</code></span>
+              <span class="exec-time">Duration: <strong id="execDurationDisplay">0ms</strong></span>
+            </div>
+          </div>
+          <div id="answerContent" class="markdown-body answer-card"></div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Execution Trace -->
+      <div id="traceTab" class="tab-pane">
+        <div id="traceEmptyState" class="empty-state">
+          <p>No execution trace recorded yet. Run a query to inspect live step timing.</p>
+        </div>
+        <div id="traceTimeline" class="trace-timeline" style="display: none;"></div>
+      </div>
+
+      <!-- Tab 3: Sources & RAG -->
+      <div id="sourcesTab" class="tab-pane">
+        <div id="sourcesEmptyState" class="empty-state">
+          <p>No knowledge base chunks retrieved yet.</p>
+        </div>
+        <div id="sourcesList" class="sources-list" style="display: none;"></div>
+      </div>
+
+      <!-- Tab 4: Prompt Audit -->
+      <div id="promptTab" class="tab-pane">
+        <div class="prompt-header">
+          <h3>Auditable LLM Prompt (final_prompt.txt)</h3>
+          <p class="text-sm">Exact sanitized input dispatched to LLM. Secrets and keys are strictly redacted.</p>
+        </div>
+        <pre id="promptContent" class="code-block">Run an agent query to view the generated prompt audit log.</pre>
+      </div>
+
+      <!-- Tab 5: MCP Tool Catalog -->
+      <div id="mcpTab" class="tab-pane">
+        <div class="mcp-header">
+          <h3>Registered MCP Servers & Dynamic Tools</h3>
+          <p class="text-sm">Real-time Model Context Protocol discovery catalog.</p>
+        </div>
+        <div id="mcpServerList" class="server-cards-grid"></div>
+        <h4 class="mt-4">Discovered Tools</h4>
+        <div id="mcpToolsTable" class="tools-table-container"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
